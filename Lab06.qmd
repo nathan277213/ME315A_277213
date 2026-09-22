@@ -1,0 +1,138 @@
+---
+title: "Lab06"
+author: "Nathan Recco Neves  277213"
+format: pdf
+editor: source
+---
+
+# Laboratório 6
+
+
+```{r}
+# Carregango, e instalando se necessário, o pacote tidyverse
+if (!require("tidyverse", character.only = TRUE)) {
+  install.packages("tidyverse")
+  library("tidyverse")
+}
+
+# Carregando os pacotes para mexer com SQL
+if (!require("RSQLite", character.only = TRUE)) {
+  install.packages("RSQLite")
+  library("RSQLite")
+}
+```
+
+
+
+## Item 01
+Baixe o arquivo disco.db e armazene na variável path o caminho completo (pasta) na qual o arquivo foi gravado. Utilize o comando file.path() para combinar a variável path com o nome do arquivo (disco.db) e obter o nome do arquivo com seu respectivo caminho. Armazene este resultado na variável fname.
+```{r}
+#Criando a varável path e preenchendo-a com o caminho da pasta
+path <- getwd()
+
+# Verificando se o arquivo existe no mesmo diretório
+file.exists("disco.db")
+
+# Guardando a variável fname que contém
+fname <- file.path(path, "disco.db")
+fname
+```
+
+
+
+## Item 2
+Utilizando o pacote RSQLite, conecte-se ao arquivo de banco de dados. Armazene a conexão na variável conn.
+```{r}
+# Criando a variável conn e preenchendo-a com uma conexão, utilizando fname
+conn <- dbConnect(SQLite(), fname)
+conn
+```
+
+## Item 3
+Liste as tabelas existentes no banco de dados.
+```{r}
+dbListTables(conn)
+```
+
+
+## Item 4
+Identifique os nomes de todas as colunas existentes na tabela customers.
+```{r}
+dbListFields(conn,'customers')
+```
+
+
+## Item 5
+Utilizando apenas SQLite, com o apoio do comando dbGetQuery, identifique quantos clientes estão atualmente cadastrados neste banco de dados.
+```{r}
+number_of_customers_conn = dbGetQuery(conn,'SELECT COUNT(DISTINCT CustomerId) FROM customers')
+number_of_customers_conn
+```
+
+
+## Item 6
+Utilizando apenas SQLite, identifique o número de países diferentes em que moram os clientes encontrados acima.
+```{sql connection=conn}
+SELECT COUNT(DISTINCT Country) FROM customers
+```
+
+
+## Item 7
+Utilizando apenas SQLite, quantos clientes existem por país? A tabela resultante deve conter o nome do país e a respectiva contagem, além de ser ordenada de maneira decrescente pela referida contagem.
+```{sql connection=conn}
+SELECT Country, COUNT(*) AS QUANTITY FROM customers
+GROUP BY Country
+ORDER BY QUANTITY DESC
+```
+
+
+## Item 8
+Quais são os 5 países com mais clientes registrados? Use apenas SQLite.
+```{sql connection=conn}
+SELECT Country FROM customers
+GROUP BY Country
+ORDER BY COUNT(*) DESC LIMIT 5
+```
+
+
+
+
+## Item 9
+Quais são os países registrados que possuem apenas 6 letras no nome?
+```{sql connection=conn}
+SELECT DISTINCT Country FROM customers
+WHERE Country LIKE "______"
+```
+
+
+## Item 10
+Quais foram as músicas compradas por clientes brasileiros?
+
+```{sql connection=conn}
+SELECT DISTINCT tracks.Name
+FROM customers
+INNER JOIN invoices
+    ON customers.CustomerId = invoices.CustomerId
+INNER JOIN invoice_items
+    ON invoices.InvoiceId = invoice_items.InvoiceId
+INNER JOIN tracks
+    ON invoice_items.TrackId = tracks.TrackId
+WHERE customers.Country = 'Brazil'
+
+```
+
+## Item 11
+Desconecte do banco de dados.
+```{r}
+dbDisconnect(conn)
+```
+
+
+
+
+## Tempo
+```{r}
+Sys.setenv(TZ = "America/Sao_Paulo")
+Sys.time()
+```
+
